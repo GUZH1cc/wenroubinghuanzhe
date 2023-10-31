@@ -142,31 +142,31 @@ def send_message(to_user, access_token, city_name, weather, max_temperature, min
                # "color": get_color()
             },
             "city": {
-                "value": city_name,FF0000
+                "value": city_name,
                 # "color": get_color()
             },
             "weather": {
-                "value": weather,FF0000
+                "value": weather,
                  #"color": get_color()
             },
             "min_temperature": {
-                "value": min_temperature,FF0000
+                "value": min_temperature,
                 # "color": get_color()
             },
             "max_temperature": {
-                "value": max_temperature,FF0000
+                "value": max_temperature,
                 # "color": get_color()
             },
             "love_day": {
-                "value": love_days,FF0000
+                "value": love_days,
                  #"color": get_color()
             },
             "note_en": {
-                "value": note_en,FF0000
+                "value": note_en,
                 # "color": get_color()
             },
             "note_ch": {
-                "value": note_ch,FF0000
+                "value": note_ch,
                  #"color": get_color()
             }
         }
