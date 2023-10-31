@@ -139,35 +139,35 @@ def send_message(to_user, access_token, city_name, weather, max_temperature, min
         "data": {
             "date": {
                 "value": "{} {}".format(today, week),
-                "color": get_color()
+               # "color": get_color()
             },
             "city": {
                 "value": city_name,
-                "color": get_color()
+                # "color": get_color()
             },
             "weather": {
                 "value": weather,
-                "color": get_color()
+                 #"color": get_color()
             },
             "min_temperature": {
                 "value": min_temperature,
-                "color": get_color()
+                # "color": get_color()
             },
             "max_temperature": {
                 "value": max_temperature,
-                "color": get_color()
+                # "color": get_color()
             },
             "love_day": {
                 "value": love_days,
-                "color": get_color()
+                 #"color": get_color()
             },
             "note_en": {
                 "value": note_en,
-                "color": get_color()
+                # "color": get_color()
             },
             "note_ch": {
                 "value": note_ch,
-                "color": get_color()
+                 #"color": get_color()
             }
         }
     }
@@ -179,7 +179,7 @@ def send_message(to_user, access_token, city_name, weather, max_temperature, min
         else:
             birthday_data = "距离{}的生日还有{}天".format(value["name"], birth_day)
         # 将生日数据插入data
-        data["data"][key] = {"value": birthday_data, "color": get_color()}
+        data["data"][key] = {"value": birthday_data, "color": 0}
     headers = {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
