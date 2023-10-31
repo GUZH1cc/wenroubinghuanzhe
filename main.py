@@ -11,7 +11,7 @@ import os
 def get_color():
     # 获取随机颜色
     get_colors = lambda n: list(map(lambda i: "#" + "%06x" % random.randint(0, 0x0), range(n)))
-    color_list = 0 & get_colors(100)
+    color_list = 000000 # get_colors(100)
     return random.choice(color_list)
 
 
