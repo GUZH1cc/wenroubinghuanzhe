@@ -1,4 +1,5 @@
 import random
+import ast
 from time import time, localtime
 import cityinfo
 from requests import get, post
@@ -10,9 +11,44 @@ import os
 
 def get_color():
     # 获取随机颜色
-    get_colors = lambda n: list(map(lambda i: "#" + "%06x" % random.randint(0, 0x000000),range(n))) 
+    get_colors = lambda n: list(map(lambda i: "#" + "%06x" % random.randint(0, 0xFFFFFF), range(n)))
     color_list = get_colors(1)
     return random.choice(color_list)
+
+
+def load_config():
+    """读取公开配置，并用环境变量中的敏感配置覆盖它。"""
+    try:
+        with open("config.txt", encoding="utf-8") as f:
+            loaded_config = ast.literal_eval(f.read())
+    except FileNotFoundError:
+        print("推送消息失败，请检查config.txt文件是否与程序位于同一路径")
+        sys.exit(1)
+    except (SyntaxError, ValueError):
+        print("推送消息失败，请检查配置文件格式是否正确")
+        sys.exit(1)
+
+    environment_config = {
+        "app_id": "WECHAT_APP_ID",
+        "app_secret": "WECHAT_APP_SECRET",
+        "template_id": "WECHAT_TEMPLATE_ID",
+    }
+    for config_key, environment_key in environment_config.items():
+        environment_value = os.getenv(environment_key)
+        if environment_value:
+            loaded_config[config_key] = environment_value
+
+    users = os.getenv("WECHAT_USERS")
+    if users:
+        loaded_config["user"] = [user.strip() for user in users.split(",") if user.strip()]
+
+    required_keys = ("app_id", "app_secret", "template_id", "user")
+    missing_keys = [key for key in required_keys if not loaded_config.get(key)]
+    if missing_keys:
+        print("推送消息失败，缺少配置：{}".format(", ".join(missing_keys)))
+        sys.exit(1)
+
+    return loaded_config
 
 
 def get_access_token():
@@ -131,6 +167,27 @@ def send_message(to_user, access_token, city_name, weather, max_temperature, min
     for k, v in config.items():
         if k[0:5] == "birth":
             birthdays[k] = v
+
+    birthday_messages = {}
+    for key, value in birthdays.items():
+        birth_day = get_birthday(value["birthday"], year, today)
+        if birth_day == 0:
+            birthday_messages[key] = "今天{}生日哦，祝{}生日快乐！".format(value["name"], value["name"])
+        else:
+            birthday_messages[key] = "距离{}的生日还有{}天".format(value["name"], birth_day)
+
+    # 兼容只配置了 {{date.DATA}} 的微信模板：将全部内容合并到 date 字段。
+    date_lines = [
+        "{} {}".format(today, week),
+        "城市：{}".format(city_name),
+        "天气：{}".format(weather),
+        "气温：{}℃ ~ {}℃".format(min_temperature, max_temperature),
+        "我们已经在一起 {} 天".format(love_days),
+    ]
+    date_lines.extend(birthday_messages.values())
+    date_lines.extend(["每日一句：{}".format(note_ch), note_en])
+    full_message = "\n".join(date_lines)
+
     data = {
         "touser": to_user,
         "template_id": config["template_id"],
@@ -138,7 +195,7 @@ def send_message(to_user, access_token, city_name, weather, max_temperature, min
         "topcolor": "#FF0000",
         "data": {
             "date": {
-                "value": "{} {}".format(today, week),
+                "value": full_message,
                 "color": get_color()
             },
             "city": {
@@ -171,15 +228,8 @@ def send_message(to_user, access_token, city_name, weather, max_temperature, min
             }
         }
     }
-    for key, value in birthdays.items():
-        # 获取距离下次生日的时间
-        birth_day = get_birthday(value["birthday"], year, today)
-        if birth_day == 0:
-            birthday_data = "今天{}生日哦，祝{}生日快乐！".format(value["name"], value["name"])
-        else:
-            birthday_data = "距离{}的生日还有{}天".format(value["name"], birth_day)
-        # 将生日数据插入data
-        data["data"][key] = {"value": birthday_data, "color": 0}
+    for key, birthday_message in birthday_messages.items():
+        data["data"][key] = {"value": birthday_message, "color": get_color()}
     headers = {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
@@ -199,17 +249,7 @@ def send_message(to_user, access_token, city_name, weather, max_temperature, min
 
 
 if __name__ == "__main__":
-    try:
-        with open("config.txt", encoding="utf-8") as f:
-            config = eval(f.read())
-    except FileNotFoundError:
-        print("推送消息失败，请检查config.txt文件是否与程序位于同一路径")
-        os.system("pause")
-        sys.exit(1)
-    except SyntaxError:
-        print("推送消息失败，请检查配置文件格式是否正确")
-        os.system("pause")
-        sys.exit(1)
+    config = load_config()
 
     # 获取accessToken
     accessToken = get_access_token()
